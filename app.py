@@ -254,8 +254,19 @@ class PlaygroundRequestHandler(BaseHTTPRequestHandler):
                 )
                 self._send_json(200, res)
             except Exception as e:
-                traceback.print_exc()
-                self._send_json(500, {"error": str(e)})
+                # Clean up the error message for the user
+                error_str = str(e)
+                if "401" in error_str or "invalid_api_key" in error_str or "Invalid API Key" in error_str:
+                    friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com/keys."
+                elif "No API key" in error_str or "Invalid key format" in error_str:
+                    friendly = error_str
+                elif "429" in error_str or "rate_limit" in error_str:
+                    friendly = "Rate limit reached on your Groq key. Please wait a moment and try again."
+                elif "model" in error_str.lower() and "not found" in error_str.lower():
+                    friendly = f"Model not available: {model}. Try a different model."
+                else:
+                    friendly = error_str.split("\n")[0][:150]
+                self._send_json(500, {"error": friendly})
             return
 
         # 5. Transform prompt (Zero -> One/Few-shot)

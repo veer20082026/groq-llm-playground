@@ -56,11 +56,15 @@ class GroqService:
         return Groq(api_key=key)
 
     def test_connection(self, api_key: Optional[str] = None) -> Dict[str, Any]:
-        """Test if the provided Groq API key is valid by querying available models or a small completion."""
+        """Test if the provided Groq API key is valid by querying a small completion."""
+        key = api_key or self.api_key or os.getenv("GROQ_API_KEY", "")
+        if not key:
+            return {"success": False, "error": "No API key provided. Please paste your Groq API key."}
+        if not key.startswith("gsk_"):
+            return {"success": False, "error": "Invalid key format. Groq API keys start with 'gsk_'. Please check your key."}
         try:
-            client = self.get_client(api_key)
+            client = self.get_client(key)
             start_time = time.time()
-            # Fast test completion
             response = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": "ping"}],
@@ -71,13 +75,21 @@ class GroqService:
             return {
                 "success": True,
                 "latency_ms": elapsed_ms,
-                "message": "Groq API connection successful!"
+                "message": "Groq API connected successfully!"
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            # Extract a clean, human-readable error message
+            error_str = str(e)
+            if "401" in error_str or "invalid_api_key" in error_str or "Invalid API Key" in error_str:
+                friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com."
+            elif "429" in error_str or "rate_limit" in error_str:
+                friendly = "Rate limit reached. Please wait a moment and try again."
+            elif "Connection" in error_str or "resolve" in error_str or "network" in error_str.lower():
+                friendly = "Could not connect to Groq. Check your internet connection."
+            else:
+                # Return a trimmed version without raw dicts
+                friendly = error_str.split("\n")[0][:120]
+            return {"success": False, "error": friendly}
 
     def analyze_prompt_deep(self, prompt: str, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile") -> Dict[str, Any]:
         """
@@ -164,7 +176,13 @@ class GroqService:
         """
         Execute the prompt on Groq and measure inference speed and tokens.
         """
-        client = self.get_client(api_key)
+        key = api_key or self.api_key or os.getenv("GROQ_API_KEY", "")
+        if not key:
+            raise ValueError("No API key provided. Please paste your Groq API key in the input field.")
+        if not key.startswith("gsk_"):
+            raise ValueError("Invalid key format. Groq API keys start with 'gsk_'. Please check your key.")
+
+        client = self.get_client(key)
 
         messages = []
         if system_prompt and system_prompt.strip():

@@ -121,10 +121,18 @@ document.addEventListener("DOMContentLoaded", () => {
     keyStatus.className = "key-status " + (className || "");
   }
 
+  function validateKey(key) {
+    if (!key) return "Please paste your Groq API key first.";
+    if (!key.startsWith("gsk_")) return "Invalid format — Groq keys start with 'gsk_'. Check you copied the full key.";
+    if (key.length < 20) return "Key looks too short. Make sure you copied the full key.";
+    return null; // valid
+  }
+
   async function testGroqKey() {
-    const key = apiKeyInput.value.trim() || userApiKey;
-    if (!key) {
-      highlightApiKeyBox("Please paste an API key first!");
+    const key = apiKeyInput.value.trim();
+    const validationError = validateKey(key);
+    if (validationError) {
+      highlightApiKeyBox(validationError);
       return;
     }
 
@@ -139,12 +147,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await res.json();
       if (data.success) {
-        setKeyStatus(`✓ Connected (${data.latency_ms}ms)`, "success");
+        setKeyStatus(`✓ Connected! (${data.latency_ms}ms round-trip)`, "success");
       } else {
-        setKeyStatus(`✕ Failed: ${data.error ? data.error.substring(0, 35) : "Auth error"}`, "error");
+        setKeyStatus(`✕ ${data.error || "Connection failed"}`, "error");
       }
     } catch (e) {
-      setKeyStatus("✕ Connection error", "error");
+      setKeyStatus("✕ Could not reach server. Is it running?", "error");
     } finally {
       testKeyBtn.textContent = "Test Key";
       testKeyBtn.disabled = false;
@@ -200,8 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const key = apiKeyInput.value.trim() || userApiKey;
-    if (!key) {
-      highlightApiKeyBox("Please paste your Groq API key to get an LLM answer!");
+    const keyError = validateKey(key);
+    if (keyError) {
+      highlightApiKeyBox(keyError);
       return;
     }
 
@@ -236,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Call Groq
     submitBtn.classList.add("loading");
     submitBtn.disabled = true;
-    responseText.textContent = "Thinking and generating response via Groq LPU™...";
+    responseText.textContent = "Generating response via Groq LPU™...";
     responseStats.textContent = "";
 
     try {
@@ -254,8 +263,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Groq request failed");
+      if (!res.ok || data.error) {
+        const errMsg = data.error || `HTTP ${res.status}`;
+        responseText.innerHTML = `<div style="color:#f87171;font-weight:600">⚠️ Error from Groq:</div><div style="color:#fca5a5;margin-top:6px">${escapeHtml(errMsg)}</div>`;
+        // If it's an auth error, highlight the key box
+        if (errMsg.toLowerCase().includes("key") || errMsg.includes("401") || errMsg.toLowerCase().includes("auth") || errMsg.toLowerCase().includes("invalid")) {
+          highlightApiKeyBox(errMsg);
+        }
+        return;
       }
 
       responseText.textContent = data.output;
@@ -263,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         responseStats.textContent = `${data.metrics.tokens_per_second || 0} tok/s • ${data.metrics.latency_ms || 0} ms • ${data.model || modelSelect.value}`;
       }
     } catch (err) {
-      responseText.innerHTML = `<span style="color:#f87171">Error: ${escapeHtml(err.message)}</span>`;
+      responseText.innerHTML = `<div style="color:#f87171;font-weight:600">⚠️ Error:</div><div style="color:#fca5a5;margin-top:6px">${escapeHtml(err.message)}</div>`;
     } finally {
       submitBtn.classList.remove("loading");
       submitBtn.disabled = false;
