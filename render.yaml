@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: groq-llm-playground
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GROQ_API_KEY
+        sync: false
