@@ -3,375 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Groq Prompt Playground - Zero, One & Few-Shot Detector</title>
+  <title>Groq Prompt Shot Checker & Playground</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="logo-area">
-        <div class="groq-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#F55036" stroke="#F55036" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-title">
-            <span class="groq-text">GROQ</span>
-            <span class="playground-text">Prompt Playground</span>
-          </div>
-          <div class="tagline">Zero-Shot • One-Shot • Few-Shot Classifier & Diagnostics</div>
-        </div>
+  <div class="container">
+    <!-- Clean Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-badge">⚡ GROQ</span>
+        <span class="logo-title">Prompt Shot Checker</span>
       </div>
-
-      <div class="header-controls">
-        <!-- Model Selector -->
-        <div class="control-group">
-          <label for="model-select">Model:</label>
-          <select id="model-select" class="dropdown-select">
-            <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B Versatile (Flagship)</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (800+ tok/s)</option>
-            <option value="mixtral-8x7b-32768">Mixtral 8x7B (MoE 32k)</option>
-            <option value="gemma2-9b-it">Gemma 2 9B IT (Google)</option>
-          </select>
-        </div>
-
-        <!-- Presets Menu -->
-        <div class="control-group">
-          <label for="preset-select">Preset Prompts:</label>
-          <select id="preset-select" class="dropdown-select">
-            <option value="">-- Load a Sample Prompt --</option>
-          </select>
-        </div>
-
-        <!-- API Key Status / Button -->
-        <button id="api-key-btn" class="btn btn-secondary">
-          <span id="key-indicator" class="status-dot"></span>
-          <span id="key-label">Groq API Key</span>
-        </button>
-
-        <!-- Parameters / Settings Button -->
-        <button id="settings-toggle-btn" class="btn btn-icon" title="Generation Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
+      <div class="model-badge">
+        <select id="model-select">
+          <option value="llama-3.3-70b-versatile" selected>Llama 3.3 70B (Fast & Smart)</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B (Ultra Fast)</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        </select>
       </div>
     </header>
 
-    <!-- Prominent API Key Banner with Placeholder -->
-    <div class="api-key-banner">
-      <div class="api-key-banner-inner">
-        <div class="api-key-label-group">
-          <span class="key-icon">🔑</span>
-          <span class="key-banner-title">Groq API Key:</span>
+    <!-- API Key Input Section -->
+    <div class="api-key-box" id="api-key-box">
+      <div class="api-key-row">
+        <label for="api-key-input">🔑 Groq API Key:</label>
+        <div class="input-wrapper">
+          <input 
+            type="password" 
+            id="api-key-input" 
+            placeholder="Paste your Groq API Key here (gsk_...)" 
+            autocomplete="off" 
+            spellcheck="false" 
+          />
+          <button id="toggle-key-btn" type="button" title="Show/Hide Key">👁️</button>
         </div>
-        <div class="api-key-input-wrapper" id="key-input-wrapper">
-          <input type="password" id="inline-key-input" placeholder="Paste your Groq API Key here (gsk_...)" autocomplete="off" spellcheck="false" />
-          <button id="inline-toggle-key" class="btn-eye" type="button" title="Show/Hide API Key">👁️</button>
-        </div>
-        <button id="inline-test-key-btn" class="btn btn-sm btn-secondary" type="button">Test Connection</button>
-        <div id="inline-key-status" class="key-status-text">
-          <span id="banner-status-dot" class="status-dot"></span>
-          <span id="banner-status-msg" class="status-msg">No key entered (offline mode)</span>
-        </div>
-        <div class="key-privacy-notice">
-          🔒 Stored only in your browser. Never saved to server.
-        </div>
+        <button id="test-key-btn" type="button" class="btn-subtle">Test Key</button>
+        <span id="key-status" class="key-status">No key saved</span>
+      </div>
+      <p class="api-key-note">🔒 Your API key is stored only in your browser. We never see, store, or log your key.</p>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="presets-row">
+      <span class="presets-label">Try an example:</span>
+      <button class="preset-pill" data-type="zero">Zero-Shot Example</button>
+      <button class="preset-pill" data-type="one">One-Shot Example</button>
+      <button class="preset-pill" data-type="few">Few-Shot Example</button>
+    </div>
+
+    <!-- Main Prompt Input Area -->
+    <div class="card input-card">
+      <div class="card-header">
+        <label for="prompt-input" class="section-title">Your Prompt</label>
+        <span id="live-shot-tag" class="shot-tag tag-neutral">Analyzing...</span>
+      </div>
+      <textarea 
+        id="prompt-input" 
+        rows="7" 
+        placeholder="Enter your prompt here... (e.g. ask a question directly, or provide 1 example for one-shot, or multiple examples for few-shot)"
+      ></textarea>
+      
+      <div class="action-row">
+        <button id="submit-btn" class="btn-primary">
+          <span>⚡ Submit to Groq & Detect Shot</span>
+        </button>
+        <button id="clear-btn" class="btn-secondary">Clear</button>
       </div>
     </div>
 
-    <!-- Main Workspace -->
-    <main class="main-workspace">
-      <!-- Left Column: Prompt Input & Controls -->
-      <section class="prompt-section">
-        <div class="panel-header">
-          <div class="panel-title">
-            <span>Prompt Editor</span>
-            <div id="live-shot-badge" class="badge badge-neutral">
-              Analyzing...
-            </div>
-          </div>
-          <div class="editor-stats" id="editor-stats">
-            0 words | 0 chars
-          </div>
-        </div>
-
-        <!-- Optional System Prompt Toggle -->
-        <div class="system-prompt-toggle">
-          <button id="toggle-system-btn" class="text-link">
-            <span class="chevron">▶</span> System Prompt (Optional)
-          </button>
-        </div>
-        <div id="system-prompt-wrapper" class="system-prompt-wrapper collapsed">
-          <textarea id="system-prompt-input" rows="2" placeholder="e.g., You are a meticulous classification assistant that outputs strict JSON."></textarea>
-        </div>
-
-        <!-- Main Prompt Textarea -->
-        <div class="prompt-input-container">
-          <textarea id="prompt-input" placeholder="Type or paste your prompt here to check whether it is Zero-shot, One-shot, or Few-shot, then execute it on Groq..."></textarea>
-        </div>
-
-        <!-- Primary Action Buttons -->
-        <div class="prompt-action-bar">
-          <div class="action-buttons-left">
-            <button id="analyze-btn" class="btn btn-primary" title="Detect shots and perform deep Groq prompt diagnostics">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <span>Analyze Prompt Shot</span>
-            </button>
-
-            <button id="run-btn" class="btn btn-groq" title="Run this prompt on Groq high-speed LPU">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5 3l14 9-14 9V3z"/>
-              </svg>
-              <span>Run on Groq</span>
-            </button>
-
-            <button id="transform-dropdown-btn" class="btn btn-secondary" title="Convert prompt between shot formats">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              </svg>
-              <span>Transform Shot ▾</span>
-            </button>
-            <div id="transform-menu" class="dropdown-menu hidden">
-              <div class="dropdown-item" data-shot="zero-shot">Convert to Zero-Shot</div>
-              <div class="dropdown-item" data-shot="one-shot">Convert to One-Shot</div>
-              <div class="dropdown-item" data-shot="few-shot">Convert to Few-Shot (3 Examples)</div>
-            </div>
-          </div>
-
-          <div class="action-buttons-right">
-            <button id="clear-btn" class="btn btn-ghost" title="Clear prompt">Clear</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Right Column: Diagnostics, Output & Transformer -->
-      <section class="results-section">
-        <!-- Tab Bar -->
-        <div class="tab-bar">
-          <button class="tab-btn active" data-tab="tab-analysis">
-            <span class="tab-icon">🎯</span> Shot Diagnostics
-          </button>
-          <button class="tab-btn" data-tab="tab-output">
-            <span class="tab-icon">⚡</span> Groq Output & Speed
-          </button>
-          <button class="tab-btn" data-tab="tab-transform">
-            <span class="tab-icon">✨</span> Shot Converter
-          </button>
-        </div>
-
-        <div class="tab-content-wrapper">
-          <!-- TAB 1: Shot Diagnostics -->
-          <div id="tab-analysis" class="tab-pane active">
-            <!-- Classification Highlight Banner -->
-            <div class="classification-card" id="classification-card">
-              <div class="classification-header">
-                <div class="classification-badge-large" id="main-shot-badge">
-                  ZERO-SHOT
-                </div>
-                <div class="confidence-pill" id="confidence-pill">
-                  Confidence: 95%
-                </div>
-              </div>
-              <p class="classification-reasoning" id="classification-reasoning">
-                Type or load a prompt to inspect its shot structure.
-              </p>
-            </div>
-
-            <!-- Deep Groq Analysis Box (If LLM analysis ran) -->
-            <div id="deep-analysis-section" class="deep-section">
-              <div class="section-heading">
-                <span>🧠 Groq Deep Semantic Diagnostics</span>
-                <span id="deep-status-tag" class="pill pill-sm">Llama 3.3 70B</span>
-              </div>
-              <div class="metrics-grid">
-                <div class="metric-card">
-                  <div class="metric-val" id="quality-score-val">--</div>
-                  <div class="metric-lbl">Prompt Quality</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-val" id="examples-count-val">0</div>
-                  <div class="metric-lbl">Demonstrations</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-val" id="deep-latency-val">--</div>
-                  <div class="metric-lbl">Analysis Time</div>
-                </div>
-              </div>
-
-              <!-- Techniques Detected -->
-              <div class="techniques-box">
-                <div class="sub-label">Techniques Detected:</div>
-                <div class="tech-tags-list" id="tech-tags-list">
-                  <span class="tag">Zero-shot instruction</span>
-                </div>
-              </div>
-
-              <!-- Improvement Recommendations -->
-              <div id="improvements-box" class="improvements-box">
-                <div class="sub-label">💡 Recommendations & Insights:</div>
-                <ul id="improvements-list">
-                  <li>No recommendations yet. Run "Analyze Prompt Shot" to get deep AI feedback.</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Extracted Demonstration Examples -->
-            <div class="extracted-examples-section">
-              <div class="section-heading">
-                <span>📋 Detected Demonstration Examples (<span id="example-counter">0</span>)</span>
-              </div>
-              <div id="examples-container" class="examples-container">
-                <div class="empty-state">
-                  No demonstration examples detected in this prompt. It directly instructs the model without solved examples (Zero-shot).
-                </div>
-              </div>
-            </div>
-
-            <!-- Target Query Section -->
-            <div class="target-query-section">
-              <div class="section-heading">
-                <span>🎯 Target Query / Final Task for LLM</span>
-              </div>
-              <div class="code-preview" id="target-query-text">
-                Waiting for prompt...
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 2: Groq Output & Speed Metrics -->
-          <div id="tab-output" class="tab-pane">
-            <!-- Groq Performance HUD -->
-            <div class="groq-hud">
-              <div class="hud-item">
-                <div class="hud-label">Inference Speed</div>
-                <div class="hud-value highlight" id="hud-speed">0.0 <span class="unit">tok/s</span></div>
-              </div>
-              <div class="hud-item">
-                <div class="hud-label">Total Latency</div>
-                <div class="hud-value" id="hud-latency">0 <span class="unit">ms</span></div>
-              </div>
-              <div class="hud-item">
-                <div class="hud-label">Output Tokens</div>
-                <div class="hud-value" id="hud-tokens">0 <span class="unit">tok</span></div>
-              </div>
-              <div class="hud-item">
-                <div class="hud-label">Model</div>
-                <div class="hud-value small" id="hud-model">Llama 3.3 70B</div>
-              </div>
-            </div>
-
-            <!-- Response Output Area -->
-            <div class="response-container">
-              <div class="response-toolbar">
-                <span class="response-title">Model Response</span>
-                <button id="copy-output-btn" class="btn btn-sm btn-ghost">Copy Response</button>
-              </div>
-              <div id="response-output" class="response-content">
-                <div class="empty-state">
-                  Press <strong>Run on Groq</strong> (or Cmd/Ctrl + Enter) to generate completion on Groq's high-speed inference engine.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 3: Prompt Converter -->
-          <div id="tab-transform" class="tab-pane">
-            <div class="transform-guide">
-              <h3>✨ In-Context Learning Prompt Generator</h3>
-              <p>Groq can automatically augment your zero-shot prompt with diverse, solved input-output demonstrations (few-shot prompting) to drastically improve accuracy and consistency.</p>
-            </div>
-
-            <div class="transform-controls">
-              <button class="btn btn-secondary transform-target-btn" data-target="one-shot">Generate 1-Shot Version</button>
-              <button class="btn btn-secondary transform-target-btn active" data-target="few-shot">Generate 3-Shot Few-Shot Version</button>
-              <button class="btn btn-secondary transform-target-btn" data-target="zero-shot">Strip to Zero-Shot</button>
-            </div>
-
-            <div class="transformed-result-area">
-              <div class="response-toolbar">
-                <span class="response-title">Transformed Prompt</span>
-                <div>
-                  <button id="apply-transformed-btn" class="btn btn-sm btn-primary">Apply to Editor</button>
-                  <button id="copy-transformed-btn" class="btn btn-sm btn-ghost">Copy</button>
-                </div>
-              </div>
-              <div id="transformed-output" class="code-preview transformed-preview">
-                Select a target format above and click generate to rewrite your prompt.
-              </div>
-              <div id="transform-explanation" class="transform-explanation"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Slide-over Settings Drawer -->
-    <div id="settings-drawer" class="settings-drawer">
-      <div class="drawer-header">
-        <h3>Model Parameters</h3>
-        <button id="close-settings-btn" class="btn-icon">✕</button>
-      </div>
-      <div class="drawer-content">
-        <div class="param-group">
-          <div class="param-label-row">
-            <label for="temp-slider">Temperature</label>
-            <span id="temp-val">0.7</span>
-          </div>
-          <input type="range" id="temp-slider" min="0" max="2" step="0.1" value="0.7">
-          <div class="param-help">Lower = more deterministic, higher = more creative.</div>
-        </div>
-
-        <div class="param-group">
-          <div class="param-label-row">
-            <label for="tokens-slider">Max Output Tokens</label>
-            <span id="tokens-val">1024</span>
-          </div>
-          <input type="range" id="tokens-slider" min="64" max="4096" step="64" value="1024">
-          <div class="param-help">Maximum response length.</div>
-        </div>
-
-        <div class="param-group">
-          <div class="param-label-row">
-            <label for="top-p-slider">Top-P (Nucleus Sampling)</label>
-            <span id="top-p-val">1.0</span>
-          </div>
-          <input type="range" id="top-p-slider" min="0.1" max="1.0" step="0.05" value="1.0">
-          <div class="param-help">Alternative to temperature for sampling diversity.</div>
+    <!-- Result Area (Appears after submission or real-time detection) -->
+    <div id="result-section" class="card result-card hidden">
+      <!-- 1. Shot Classification Result Banner -->
+      <div class="shot-banner" id="shot-banner">
+        <div class="shot-badge-large" id="shot-badge-large">ZERO-SHOT PROMPT</div>
+        <div class="shot-explanation" id="shot-explanation">
+          No demonstration examples detected. The prompt directly asks the model without solved examples.
         </div>
       </div>
-    </div>
 
-    <!-- API Key Modal -->
-    <div id="api-modal" class="modal-overlay hidden">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3>Groq API Key Setup</h3>
-          <button id="close-modal-btn" class="btn-icon">✕</button>
+      <!-- 2. Demonstration breakdown (if one-shot or few-shot) -->
+      <div id="examples-block" class="examples-block hidden">
+        <div class="block-title">Detected Demonstration Examples:</div>
+        <div id="examples-list" class="examples-list"></div>
+      </div>
+
+      <!-- 3. LLM Response -->
+      <div class="response-block">
+        <div class="response-header">
+          <span class="block-title">Groq LLM Answer:</span>
+          <span id="response-stats" class="response-stats"></span>
         </div>
-        <div class="modal-body">
-          <p>Enter your Groq API key to enable high-speed LLM inference and deep semantic prompt diagnostics. Your key is stored locally in your browser.</p>
-          <div class="input-field-group">
-            <input type="password" id="modal-key-input" placeholder="gsk_..." />
-            <button id="toggle-key-visibility" class="btn btn-sm btn-ghost">Show</button>
-          </div>
-          <div class="key-help">
-            Don't have a key? Get one for free at <a href="https://console.groq.com/keys" target="_blank">console.groq.com</a>.
-          </div>
-          <div id="modal-test-result" class="modal-test-result"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="test-key-btn" class="btn btn-secondary">Test Connection</button>
-          <button id="save-key-btn" class="btn btn-primary">Save & Connect</button>
+        <div id="response-text" class="response-text">
+          Waiting for response...
         </div>
       </div>
     </div>
