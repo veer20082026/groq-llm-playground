@@ -56,8 +56,8 @@ class GroqService:
         return Groq(api_key=key)
 
     def test_connection(self, api_key: Optional[str] = None) -> Dict[str, Any]:
-        """Test if the provided Groq API key is valid by querying a small completion."""
-        key = api_key or self.api_key or os.getenv("GROQ_API_KEY", "")
+        """Test if the provided Groq API key is valid by querying the official models list."""
+        key = (api_key or self.api_key or os.getenv("GROQ_API_KEY", "")).strip()
         if not key:
             return {"success": False, "error": "No API key provided. Please paste your Groq API key."}
         if not key.startswith("gsk_"):
@@ -65,29 +65,29 @@ class GroqService:
         try:
             client = self.get_client(key)
             start_time = time.time()
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": "ping"}],
-                max_tokens=5,
-                temperature=0.0
-            )
+            # Use models.list() - works for all keys regardless of individual model restrictions
+            models_response = client.models.list()
             elapsed_ms = round((time.time() - start_time) * 1000, 2)
+
+            # Filter for text chat models (exclude whisper audio models)
+            model_ids = [m.id for m in models_response.data if hasattr(m, 'id') and "whisper" not in m.id.lower()]
+            
             return {
                 "success": True,
                 "latency_ms": elapsed_ms,
-                "message": "Groq API connected successfully!"
+                "message": "Groq API connected successfully!",
+                "available_models": model_ids
             }
         except Exception as e:
             # Extract a clean, human-readable error message
             error_str = str(e)
             if "401" in error_str or "invalid_api_key" in error_str or "Invalid API Key" in error_str:
-                friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com."
+                friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com/keys."
             elif "429" in error_str or "rate_limit" in error_str:
                 friendly = "Rate limit reached. Please wait a moment and try again."
             elif "Connection" in error_str or "resolve" in error_str or "network" in error_str.lower():
                 friendly = "Could not connect to Groq. Check your internet connection."
             else:
-                # Return a trimmed version without raw dicts
                 friendly = error_str.split("\n")[0][:120]
             return {"success": False, "error": friendly}
 
@@ -190,13 +190,46 @@ class GroqService:
         messages.append({"role": "user", "content": prompt})
 
         start_time = time.time()
-        completion = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p
-        )
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p
+            )
+        except Exception as e:
+            # If the selected model does not exist or user has no access, auto-fallback to an active model
+            err_msg = str(e)
+            if "404" in err_msg or "does not exist" in err_msg or "do not have access" in err_msg:
+                try:
+                    available = client.models.list()
+                    valid_ids = [m.id for m in available.data if hasattr(m, 'id') and "whisper" not in m.id.lower()]
+                    
+                    fallback = None
+                    # Try flagship models in priority order
+                    for candidate in ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it"]:
+                        if candidate in valid_ids:
+                            fallback = candidate
+                            break
+                    if not fallback and valid_ids:
+                        fallback = valid_ids[0]
+                    
+                    if fallback and fallback != model:
+                        completion = client.chat.completions.create(
+                            model=fallback,
+                            messages=messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                            top_p=top_p
+                        )
+                        model = fallback
+                    else:
+                        raise e
+                except Exception:
+                    raise e
+            else:
+                raise e
         elapsed_sec = time.time() - start_time
 
         content = completion.choices[0].message.content

@@ -148,7 +148,18 @@ def application(environ, start_response):
                 start_response("200 OK", headers)
                 return [body]
             except Exception as e:
-                err = json.dumps({"error": str(e)}).encode("utf-8")
+                error_str = str(e)
+                if "401" in error_str or "invalid_api_key" in error_str or "Invalid API Key" in error_str:
+                    friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com/keys."
+                elif "No API key" in error_str or "Invalid key format" in error_str:
+                    friendly = error_str
+                elif "429" in error_str or "rate_limit" in error_str:
+                    friendly = "Rate limit reached on your Groq key. Please wait a moment and try again."
+                elif "404" in error_str or "does not exist" in error_str:
+                    friendly = f"Model {model} was not found or accessible for this key."
+                else:
+                    friendly = error_str.split("\n")[0][:150]
+                err = json.dumps({"error": friendly}).encode("utf-8")
                 headers.extend([("Content-Type", "application/json"), ("Content-Length", str(len(err)))])
                 start_response("500 Internal Server Error", headers)
                 return [err]
@@ -165,7 +176,18 @@ def application(environ, start_response):
                 start_response("200 OK", headers)
                 return [body]
             except Exception as e:
-                err = json.dumps({"error": str(e)}).encode("utf-8")
+                error_str = str(e)
+                if "401" in error_str or "invalid_api_key" in error_str or "Invalid API Key" in error_str:
+                    friendly = "Invalid API key. Double-check that you copied the full key from console.groq.com/keys."
+                elif "No API key" in error_str or "Invalid key format" in error_str:
+                    friendly = error_str
+                elif "429" in error_str or "rate_limit" in error_str:
+                    friendly = "Rate limit reached on your Groq key. Please wait a moment and try again."
+                elif "404" in error_str or "does not exist" in error_str:
+                    friendly = f"Model {model} was not found or accessible for this key."
+                else:
+                    friendly = error_str.split("\n")[0][:150]
+                err = json.dumps({"error": friendly}).encode("utf-8")
                 headers.extend([("Content-Type", "application/json"), ("Content-Length", str(len(err)))])
                 start_response("500 Internal Server Error", headers)
                 return [err]

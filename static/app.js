@@ -148,6 +148,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (data.success) {
         setKeyStatus(`✓ Connected! (${data.latency_ms}ms round-trip)`, "success");
+        if (data.available_models && data.available_models.length > 0) {
+          updateModelDropdown(data.available_models);
+        }
       } else {
         setKeyStatus(`✕ ${data.error || "Connection failed"}`, "error");
       }
@@ -166,6 +169,24 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       apiKeyBox.classList.remove("highlight");
     }, 2000);
+  }
+
+  function updateModelDropdown(availableModels) {
+    if (!availableModels || !availableModels.length) return;
+    const currentVal = modelSelect.value;
+    modelSelect.innerHTML = "";
+    availableModels.forEach(mId => {
+      const opt = document.createElement("option");
+      opt.value = mId;
+      opt.textContent = mId;
+      if (mId === "llama-3.3-70b-versatile" || mId === currentVal) {
+        opt.selected = true;
+      }
+      modelSelect.appendChild(opt);
+    });
+    if (!modelSelect.value && modelSelect.options.length > 0) {
+      modelSelect.selectedIndex = 0;
+    }
   }
 
   // Fast client-side prompt shot detection
