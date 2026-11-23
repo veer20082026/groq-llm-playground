@@ -173,18 +173,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateModelDropdown(availableModels) {
     if (!availableModels || !availableModels.length) return;
-    const currentVal = modelSelect.value;
+
+    // Filter strictly for standard chat text LLMs
+    const cleanList = availableModels.filter(m => {
+      const lower = m.toLowerCase();
+      return (lower.startsWith("llama") || lower.startsWith("mixtral") || lower.startsWith("gemma") || lower.startsWith("deepseek") || lower.startsWith("qwen"))
+        && !lower.includes("canopy") && !lower.includes("whisper") && !lower.includes("orpheus") && !lower.includes("tts") && !lower.includes("vision");
+    });
+
+    if (!cleanList.length) return;
+
     modelSelect.innerHTML = "";
-    availableModels.forEach(mId => {
+    cleanList.forEach(mId => {
       const opt = document.createElement("option");
       opt.value = mId;
       opt.textContent = mId;
-      if (mId === "llama-3.3-70b-versatile" || mId === currentVal) {
-        opt.selected = true;
-      }
       modelSelect.appendChild(opt);
     });
-    if (!modelSelect.value && modelSelect.options.length > 0) {
+
+    // Always prefer llama-3.3-70b-versatile as default
+    if (cleanList.includes("llama-3.3-70b-versatile")) {
+      modelSelect.value = "llama-3.3-70b-versatile";
+    } else {
       modelSelect.selectedIndex = 0;
     }
   }

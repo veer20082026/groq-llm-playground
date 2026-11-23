@@ -69,14 +69,31 @@ class GroqService:
             models_response = client.models.list()
             elapsed_ms = round((time.time() - start_time) * 1000, 2)
 
-            # Filter for text chat models (exclude whisper audio models)
-            model_ids = [m.id for m in models_response.data if hasattr(m, 'id') and "whisper" not in m.id.lower()]
+            # Strictly filter for standard text chat models (exclude audio, TTS, canopy/partner gated models)
+            ALLOWED_PREFIXES = ("llama", "mixtral", "gemma", "deepseek", "qwen")
+            EXCLUDED = ("canopy", "playht", "orpheus", "whisper", "tts", "voice", "audio", "embed", "guard")
+            
+            raw_ids = [
+                m.id for m in models_response.data
+                if hasattr(m, 'id')
+                and any(m.id.lower().startswith(p) for p in ALLOWED_PREFIXES)
+                and not any(bad in m.id.lower() for bad in EXCLUDED)
+            ]
+
+            # Sort to place flagship models at the top
+            priority_order = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"]
+            sorted_models = [m for m in priority_order if m in raw_ids]
+            sorted_models += [m for m in raw_ids if m not in sorted_models]
+
+            # If filtering left nothing, fallback to standard supported models
+            if not sorted_models:
+                sorted_models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
             
             return {
                 "success": True,
                 "latency_ms": elapsed_ms,
                 "message": "Groq API connected successfully!",
-                "available_models": model_ids
+                "available_models": sorted_models
             }
         except Exception as e:
             # Extract a clean, human-readable error message
@@ -199,34 +216,31 @@ class GroqService:
                 top_p=top_p
             )
         except Exception as e:
-            # If the selected model does not exist or user has no access, auto-fallback to an active model
+            # If the selected model fails (terms acceptance, 404, does not exist, or permissions), auto-fallback to flagship Llama
             err_msg = str(e)
-            if "404" in err_msg or "does not exist" in err_msg or "do not have access" in err_msg:
-                try:
-                    available = client.models.list()
-                    valid_ids = [m.id for m in available.data if hasattr(m, 'id') and "whisper" not in m.id.lower()]
-                    
-                    fallback = None
-                    # Try flagship models in priority order
-                    for candidate in ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it"]:
-                        if candidate in valid_ids:
-                            fallback = candidate
-                            break
-                    if not fallback and valid_ids:
-                        fallback = valid_ids[0]
-                    
-                    if fallback and fallback != model:
+            is_model_error = any(term in err_msg.lower() for term in (
+                "terms acceptance", "does not exist", "do not have access", "not found", "404", "canopylabs", "orpheus"
+            ))
+            if is_model_error:
+                fallback_candidates = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"]
+                fallback_success = False
+                for fb in fallback_candidates:
+                    if fb == model:
+                        continue
+                    try:
                         completion = client.chat.completions.create(
-                            model=fallback,
+                            model=fb,
                             messages=messages,
                             temperature=temperature,
                             max_tokens=max_tokens,
                             top_p=top_p
                         )
-                        model = fallback
-                    else:
-                        raise e
-                except Exception:
+                        model = fb
+                        fallback_success = True
+                        break
+                    except Exception:
+                        continue
+                if not fallback_success:
                     raise e
             else:
                 raise e
